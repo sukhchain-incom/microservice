@@ -31,7 +31,7 @@ function PostClass(db, options, data, requestDetails) {
 
   // create changed field.
   var createdChanged = true;
-  if (self.requestDetails.headers && self.requestDetails.headers['skip-created']) {
+  if (self.requestDetails.headers && self.requestDetails.headers['skip-changed']) {
     createdChanged = false;
   }
   if (!createdChanged) {
