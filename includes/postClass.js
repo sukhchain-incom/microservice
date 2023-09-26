@@ -29,8 +29,15 @@ function PostClass(db, options, data, requestDetails) {
   self.data = data;
   self.requestDetails = requestDetails;
 
-  self.data.created = Date.now();
-  self.data.changed = Date.now();
+  // create changed field.
+  var createdChanged = true;
+  if (self.requestDetails.headers && self.requestDetails.headers['skip-created']) {
+    createdChanged = false;
+  }
+  if (!createdChanged) {
+    self.data.created = Date.now();
+    self.data.changed = Date.now();
+  }
   self.data.token = tokenGenerate(24);
 
   if (self.fileDir && self.fileDir != '') {
