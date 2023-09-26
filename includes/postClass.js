@@ -30,9 +30,9 @@ function PostClass(db, options, data, requestDetails) {
   self.requestDetails = requestDetails;
 
   // create changed field.
-  var createdChanged = true;
+  var createdChanged = false;
   if (self.requestDetails.headers && self.requestDetails.headers['skip-changed']) {
-    createdChanged = false;
+    createdChanged = true;
   }
   if (!createdChanged) {
     self.data.created = Date.now();
