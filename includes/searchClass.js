@@ -95,7 +95,8 @@ SearchClass.prototype.processFind = function(cursor, data, count, callback) {
         code: 404,
         answer: {
           message: 'Not found'
-        }
+        },
+        headers: {'x-total-count': count}
       });
     }
     if (data[fileProperty] == true) {
@@ -169,36 +170,46 @@ SearchClass.prototype.process = function(callback) {
   }
 
   // If search by ID, make sure that we convert it to object first.
+  if (query['id'] && query['_id'] === undefined) {
+    query['_id'] = query['id']
+    delete query['id']
+  }
   if (query['_id']) {
-    if (query['_id']['$in']) {
-      var ids = []
-      for (var i in query['_id']['$in']) {
-        ids.push(new ObjectID(query['_id']['$in'][i]));
+    
+    let arrayOptions = ['$in', '$nin']
+    let arrayFound = false
+    for(let i of arrayOptions) {
+      if (query['_id'][i] ) {
+        arrayFound = i
+        break;
       }
-      query['_id']['$in'] = ids;
-    } else {
+    }
+    if (arrayFound !== false) {
+      var ids = []
+      for (var i in query['_id'][arrayFound]) {
+        ids.push(new ObjectID(query['_id'][arrayFound][i]));
+      }
+      query['_id'][arrayFound] = ids;
+    }
+    
+    let valueOptions = ['$lt', '$lte', '$gt', '$gte']
+    let valueFound = false
+    for(let i of valueOptions) {
+      if (query['_id'][i] ) {
+        valueFound = i
+        break;
+      }
+    }
+    if (valueFound !== false) {
       try {
-        query['_id'] = new ObjectID(query['_id']);
+        query['_id'][valueFound] = new ObjectID(query['_id'][valueFound]);
       } catch (e) {
         return callback (e, null);
       }
     }
-  }
-
-  if (query['id']) {
-    if (query['id']['$in']) {
-      var ids = []
-      for (var i in query['id']['$in']) {
-        ids.push(new ObjectID(query['id']['$in'][i]));
-      }
-      query['_id'] = {
-        $in: ids
-      }
-      delete query['id'];
-    } else {
+    if(!valueFound && !arrayFound) {
       try {
-        query['_id'] = new ObjectID(query['id']);
-        delete query['id'];
+        query['_id'] = new ObjectID(query['_id']);
       } catch (e) {
         return callback (e, null);
       }
@@ -210,7 +221,7 @@ SearchClass.prototype.process = function(callback) {
   } else {
     cursor = collection.find(query);
   }
-
+  // roll back non compatible
   if(self.data.noCount) {
     return self.processFind(cursor, self.data, -1, callback);
   }
